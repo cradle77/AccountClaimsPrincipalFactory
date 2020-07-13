@@ -10,6 +10,7 @@ namespace AccountClaimsPrincipalFactoryIssue
 {
     public class AccountClaimsPrincipalFactoryTests
     {
+        // this test behaves as expected
         [Fact]
         public async Task CreateUserAsync_WithSingleRole_CreatesOneRoleClaim()
         {
@@ -35,6 +36,7 @@ namespace AccountClaimsPrincipalFactoryIssue
             Assert.Equal("user", roles[0].Value);
         }
 
+        // this test reproduces the bug
         [Fact]
         public async Task CreateUserAsync_WithMultipleRoles_CreatesOneRoleClaimPerValue()
         {
