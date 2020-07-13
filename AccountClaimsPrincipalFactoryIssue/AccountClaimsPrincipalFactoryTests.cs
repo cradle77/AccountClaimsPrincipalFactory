@@ -10,14 +10,24 @@ namespace AccountClaimsPrincipalFactoryIssue
 {
     public class AccountClaimsPrincipalFactoryTests
     {
+        private AccountClaimsPrincipalFactory<RemoteUserAccount> _factory;
+
+        public AccountClaimsPrincipalFactoryTests()
+        {
+            var mock = new Mock<IAccessTokenProviderAccessor>();
+
+            // this is the standard implementation, which fails test n.2
+            _factory = new AccountClaimsPrincipalFactory<RemoteUserAccount>(mock.Object);
+
+            // this is the proposed implementation, which passes both tests
+            //_factory = new ArrayClaimsPrincipalFactory<RemoteUserAccount>(mock.Object);
+        }
+
+
         // this test behaves as expected
         [Fact]
         public async Task CreateUserAsync_WithSingleRole_CreatesOneRoleClaim()
         {
-            var mock = new Mock<IAccessTokenProviderAccessor>();
-
-            var factory = new AccountClaimsPrincipalFactory<RemoteUserAccount>(mock.Object);
-
             var jsonAccount = "{\"exp\":1594647980,\"nbf\":1594644380,\"ver\":\"1.0\",\"iss\":\"https://blazorb2c.b2clogin.com/f9c7fda4-83aa-4664-b51b-23f1961de920/v2.0/\",\"sub\":\"73a93788-a470-454f-bc38-23abfc42a514\",\"aud\":\"66e7a1e8-a1e6-4394-8aef-3163c4a9d4b7\",\"nonce\":\"e9588167-2d1d-46c0-9a19-d63f30059ff4\",\"iat\":1594644380,\"auth_time\":1594644380,\"oid\":\"73a93788-a470-454f-bc38-23abfc42a514\",\"name\":\"Marco Des\",\"tfp\":\"B2C_1_signupin\", \"role\":\"user\"}";
 
             var account = JsonSerializer.Deserialize<RemoteUserAccount>(jsonAccount);
@@ -28,8 +38,8 @@ namespace AccountClaimsPrincipalFactoryIssue
                 RoleClaim = "role"
             };
 
-            var principal = await factory.CreateUserAsync(account, options);
-
+            var principal = await _factory.CreateUserAsync(account, options);
+            
             var roles = principal.FindAll("role").ToList();
 
             Assert.Single(roles);
@@ -40,10 +50,6 @@ namespace AccountClaimsPrincipalFactoryIssue
         [Fact]
         public async Task CreateUserAsync_WithMultipleRoles_CreatesOneRoleClaimPerValue()
         {
-            var mock = new Mock<IAccessTokenProviderAccessor>();
-
-            var factory = new AccountClaimsPrincipalFactory<RemoteUserAccount>(mock.Object);
-
             var jsonAccount = "{\"exp\":1594647980,\"nbf\":1594644380,\"ver\":\"1.0\",\"iss\":\"https://blazorb2c.b2clogin.com/f9c7fda4-83aa-4664-b51b-23f1961de920/v2.0/\",\"sub\":\"73a93788-a470-454f-bc38-23abfc42a514\",\"aud\":\"66e7a1e8-a1e6-4394-8aef-3163c4a9d4b7\",\"nonce\":\"e9588167-2d1d-46c0-9a19-d63f30059ff4\",\"iat\":1594644380,\"auth_time\":1594644380,\"oid\":\"73a93788-a470-454f-bc38-23abfc42a514\",\"name\":\"Marco Des\",\"tfp\":\"B2C_1_signupin\", \"role\": [ \"user\", \"superUser\" ]}";
 
             var account = JsonSerializer.Deserialize<RemoteUserAccount>(jsonAccount);
@@ -54,7 +60,7 @@ namespace AccountClaimsPrincipalFactoryIssue
                 RoleClaim = "role"
             };
 
-            var principal = await factory.CreateUserAsync(account, options);
+            var principal = await _factory.CreateUserAsync(account, options);
 
             var roles = principal.FindAll("role").ToList();
 
